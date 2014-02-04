@@ -31,25 +31,25 @@ import StringIO
 import json
 
 class PyCryptsy:
-  
+
   # constructor (Key: API public key, Secret: API private key)
   def __init__(self, Key, Secret):
     self.key=Key
     self.secret=Secret
-    
+
   # issue any supported query (method: string, req: dictionary with method parameters)
   def Query(self, method, req):
     # generate POST data string
     req["method"]=method
-    req["nonce"]=int(time.time())  
+    req["nonce"]=int(time.time())
     post_data=urllib.urlencode(req)
-  
+
     # sign it
     sign=hmac.new(self.secret, post_data, hashlib.sha512).hexdigest()
 
     # extra headers for request
     headers=["Sign: "+sign, "Key: "+self.key]
-  
+
     # curl handle
     b=StringIO.StringIO()
     ch=pycurl.Curl()
@@ -63,7 +63,7 @@ class PyCryptsy:
     except pycurl.error, error:
       errno, errstr=error
       raise Exception("pycurl error: "+errstr)
-  
+
     # decode and return
     try:
       rtnval=json.loads(b.getvalue())
@@ -81,7 +81,7 @@ class PyCryptsy:
       return mkt_id
     except:
       return None
-    
+
   # get buy price for a currency pair
   def GetBuyPrice (self, src, dest):
     mktid = self.GetMarketID(src, dest)
@@ -111,7 +111,7 @@ class PyCryptsy:
       return float(r["return"]["balances_available"][curr.upper()])
     except:
       return 0
-        
+
   # create a sell order
   def CreateSellOrder (self, src, dest, qty, price):
     try:
@@ -125,3 +125,11 @@ class PyCryptsy:
       return self.Query("createorder", {"marketid": self.GetMarketID(src, dest), "ordertype": "Buy", "quantity": qty, "price": price})
     except:
       return None
+
+  # get current open sell and buy orders for market listing
+  def GetMyOrders (self, src, dest):
+    try:
+      return self.Query("myorders", {"marketid": self.GetMarketID(src, dst)})
+    except:
+      return None
+
